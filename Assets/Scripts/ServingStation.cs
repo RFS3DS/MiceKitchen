@@ -6,14 +6,19 @@ public class ServingStation : MonoBehaviour
 
     void OnMouseDown()
     {
-        if (GameFlowManager.Instance.CurrentState != StationState.Serve) return;
+        if (GameFlowManager.Instance == null || GameFlowManager.Instance.CurrentState != StationState.Serve) return;
 
         GameObject pizza = GameObject.FindGameObjectWithTag("Pizza");
 
         if (pizza != null)
         {
-            // Здесь можно добавить подсчет очков
             Debug.Log("ЗАКАЗ ВЫДАН КЛИЕНТУ! Идеально!");
+
+            // НОВОЕ: начисляем монеты за заказ (цена + чаевые за скорость)
+            if (DayManager.Instance != null)
+            {
+                DayManager.Instance.RegisterServedOrder();
+            }
 
             // Уничтожаем пиццу
             Destroy(pizza);
@@ -21,14 +26,15 @@ public class ServingStation : MonoBehaviour
             // Сбрасываем печь
             if (oven != null) oven.ResetOven();
 
-            // Генерируем новый рецепт
-            if (OrderManager.Instance != null)
-            {
-                OrderManager.Instance.GenerateNewRecipe();
-            }
+            // ИЗМЕНЕНО: новый заказ здесь БОЛЬШЕ НЕ генерируется!
+            // Нажмите кнопку «СЛЕДУЮЩИЙ КЛИЕНТ», чтобы пришёл новый клиент
+            // с новым заказом.
 
-            // Возвращаемся в начало — к приему заказов
-            GameFlowManager.Instance.SetState(StationState.Order);
+            // Возвращаемся к приёму заказов
+            if (GameFlowManager.Instance != null)
+            {
+                GameFlowManager.Instance.SetState(StationState.Order);
+            }
         }
         else
         {

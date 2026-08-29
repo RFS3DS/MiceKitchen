@@ -10,13 +10,20 @@ public class OvenStation : MonoBehaviour
     void OnMouseDown()
     {
         // Работает только на станции Bake
-        if (GameFlowManager.Instance.CurrentState != StationState.Bake) return;
+        if (GameFlowManager.Instance == null || GameFlowManager.Instance.CurrentState != StationState.Bake) return;
         if (isBaking || isBaked) return;
 
         GameObject pizza = GameObject.FindGameObjectWithTag("Pizza");
         if (pizza != null)
         {
-            StartCoroutine(BakeRoutine(pizza));
+            // НОВОЕ: с учётом улучшения «Скоростная печь» из кабинета
+            float actualBakeTime = bakeTime;
+            if (DayManager.Instance != null)
+            {
+                actualBakeTime = DayManager.Instance.GetBakeTime(bakeTime);
+            }
+
+            StartCoroutine(BakeRoutine(pizza, actualBakeTime));
         }
         else
         {
@@ -24,23 +31,23 @@ public class OvenStation : MonoBehaviour
         }
     }
 
-    private IEnumerator BakeRoutine(GameObject pizza)
+    private IEnumerator BakeRoutine(GameObject pizza, float time)
     {
         isBaking = true;
-        Debug.Log("Пицца выпекается...");
+        Debug.Log("Пицца выпекается... (" + time.ToString("0.0") + " сек)");
 
         // Визуальный эффект: пицца постепенно темнеет (эффект корочки)
         SpriteRenderer pizzaSR = pizza.GetComponent<SpriteRenderer>();
-        Color originalColor = pizzaSR.color;
+        Color originalColor = pizzaSR != null ? pizzaSR.color : Color.white;
         Color bakedColor = new Color(0.7f, 0.5f, 0.3f); // Коричневатый оттенок
 
         float timer = 0f;
-        while (timer < bakeTime)
+        while (timer < time)
         {
             timer += Time.deltaTime;
             if (pizzaSR != null)
             {
-                pizzaSR.color = Color.Lerp(originalColor, bakedColor, timer / bakeTime);
+                pizzaSR.color = Color.Lerp(originalColor, bakedColor, timer / time);
             }
             yield return null;
         }
@@ -50,7 +57,10 @@ public class OvenStation : MonoBehaviour
         Debug.Log("Пицца готово! Пора налить напитки или выдать заказ.");
 
         // Автоматически переходим к следующему шагу
-        GameFlowManager.Instance.SetState(StationState.Drinks);
+        if (GameFlowManager.Instance != null)
+        {
+            GameFlowManager.Instance.SetState(StationState.Drinks);
+        }
     }
 
     // Сброс состояния для новой пиццы

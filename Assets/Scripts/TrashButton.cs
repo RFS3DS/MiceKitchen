@@ -19,10 +19,18 @@ public class TrashButton : MonoBehaviour
             Debug.Log("Пицца выброшена!");
         }
 
-        if (OrderManager.Instance != null)
+        // ИЗМЕНЕНО: заказ здесь БОЛЬШЕ НЕ перегенерируется!
+        // Если клиент ещё ждёт — соберите ЕГО заказ заново
+        // (посмотрите его в блокноте «ЗАКАЗ»).
+        // Если клиент ушёл — нажмите «СЛЕДУЮЩИЙ КЛИЕНТ».
+
+        if (GameFlowManager.Instance != null && OrderManager.Instance != null)
         {
-            OrderManager.Instance.GenerateNewRecipe();
-            // Возвращаем игрока к приему заказа
+            if (OrderManager.Instance.HasActiveOrder)
+            {
+                Debug.Log("Клиент всё ещё ждёт — соберите тот же заказ заново!");
+            }
+            // Возвращаем игрока к приёму заказа
             GameFlowManager.Instance.SetState(StationState.Order);
         }
     }
